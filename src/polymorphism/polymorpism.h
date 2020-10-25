@@ -3,156 +3,210 @@
 #ifndef UNDERTHEHOOD_POLYMORPISM_H
 #define UNDERTHEHOOD_POLYMORPISM_H
 
-typedef void*(*typeFuncPointer)(void*);
-typedef void*(*typeVpnPointer)(void*);
-typedef void(*typeFuncPrintLongChar)(const void* const, long, char);
-typedef char(*typeFuncGetDefaultSymbol)(const void* const);
-typedef void(*typeFuncPrintPointerToChar)(const void* const, const char*);
-typedef void(*typeDtor)(void*);
+#include "stdio.h"
+
+typedef void(*funcPtr_pvRv)(void*);
+typedef void(*funcPtr_pvlcRv)(const void *const, long, char);
+typedef char(*funcPtr_pvRc)(const void *const);
+typedef void(*funcPtr_pvpRv)(const void *const, const char*);
 
 
-
-extern int _ZN20DefaultTextFormatter4Ider7next_idE;
-extern typeVpnPointer arrayOfVirtFunctionsStructTextFormatter[];
-extern typeVpnPointer arrayOfVirtFunctionsStructDefaultTextFormatter[];
-extern typeVpnPointer arrayOfVirtFunctionsStructPrePostFixer[];
-extern typeVpnPointer arrayOfVirtFunctionsStructPrePostHashFixer[];
-extern typeVpnPointer arrayOfVirtFunctionsStructPrePostFloatDollarFixer[];
-extern typeVpnPointer arrayOfVirtFunctionsStructPrePostDollarFixer[];
-extern typeVpnPointer arrayOfVirtFunctionsStructMultiplier[];
-extern typeVpnPointer arrayOfVirtFunctionsStructPrePostChecker[];
-
+/*vTables*/
+extern funcPtr_pvRv TextFormatterVTable[];
+extern funcPtr_pvRv DefaultTextFormatterVTable[];
+extern funcPtr_pvRv PrePostFixerVTable[];
+extern funcPtr_pvRv PrePostDollarFixerVTable[];
+extern funcPtr_pvRv PrePostHashFixerVTable[];
+extern funcPtr_pvRv PrePostFloatDollarFixerVTable[];
+extern funcPtr_pvRv PrePostCheckerVTable[];
+extern funcPtr_pvRv MultiplierVTable[];
 
 
-
-typedef enum FunctionsName
-{
-    E_Dtor,
-    E_PrintEConst_char,
-    E_PrintELongAndChar,
-    E_GetDefaultSymbol
-}FunctionsName;
+enum Functions{
+    _Z4DtorEPKs,
+    _Z5printEKPc,
+    _Z5printElc,
+    _Z13defaultSymbolE
+};
 
 
-
-
-/*// TextFormatter //*/
-
-typedef struct TextFormatter{
-    void *(** vPtr)(void*);
+/* 1---TextFormatter--- */
+typedef struct _TextFormatter{
+    funcPtr_pvRv* m_vptr;
 }TextFormatter;
 
-void _ZN13TextFormatterCEv(TextFormatter* this);
 
-void _ZN13TextFormatterDEv(void* this);
+/*TextFormatter ctor is inline*/
+void _ZNC13TextFormatterEPKs(void *const this);
 
-
-/*// DefaultTextFormatter //*/
-
-
+/* 2---DefaultTextFormatter--- */
 typedef struct DefaultTextFormatter{
-    TextFormatter textFormatter;
-    int _id;
+    TextFormatter m_textFormatterBase;
+    int m_id;
 }DefaultTextFormatter;
 
+void _ZNC20DefaultTextFormatterEPKs(DefaultTextFormatter *const this);
+void _ZNC20DefaultTextFormatterEPKsKPKs(DefaultTextFormatter *const this, const DefaultTextFormatter *const other);
+DefaultTextFormatter* const _ZNC20DefaultTextFormatter10copyAssignEPKsKPKs(DefaultTextFormatter *const this, const DefaultTextFormatter *const other);
+/*virtual*/void _ZND20DefaultTextFormatterEPKv(void *const this);
+/*virtual*/void _ZN20DefaultTextFormatter5printEKPKvKPc(const void *const this, const char* text);
+
+/*---struct Ider omitted---*/
+extern int _ZN20DefaultTextFormatter4Ider7next_idE;
+
+DefaultTextFormatter* generateFormatterArray();
 
 
-void _ZN20DefaultTextFormatterCEv(DefaultTextFormatter * this);
-
-void _ZN20DefaultTextFormatterDEv(void* this);
-
-void _ZN13DefaultTextFormatter5printEc(const void*const this, const char* text);
-
-void _ZN23PrePostFloatDollarFixerCEPKcS_(DefaultTextFormatter * this, const DefaultTextFormatter*const other);
-
-DefaultTextFormatter* _ZN20DefaultTextFormatter2AsEpkD(DefaultTextFormatter * this, const DefaultTextFormatter*const other);
-
-DefaultTextFormatter* _Z22generateFormatterArrayEv();
-
-
-/*// PrePostFixer//*/
-typedef struct  PrePostFixer{
-     DefaultTextFormatter defaultTextFormatter;
-     const char* _pre;
-     const char* _post;
+/* 3---PrePostFixer--- */
+typedef struct _PrePostFixer{
+    DefaultTextFormatter m_defaultTextFormatterBase;
+    const char* m_pre;
+    const char* m_post;
 }PrePostFixer;
 
-void _ZN12PrePostFixerC1ERKS_(PrePostFixer* this, const char* prefix, const char* postfix);
-void _ZN12PrePostFixerDEv(void* this);
-void _ZN12PrePostFixerC1EPKcS1_(PrePostFixer* this, const PrePostFixer*const other);
-void _ZNK12PrePostFixer5printEPKc(const void*const this, const char* text);
-void _ZNK12PrePostFixer5printElc(const void* const this, long num, char symbol);
-char _ZNK12PrePostFixer16getDefaultSymbolEv(const void*const this);
+
+void _ZNC12PrePostFixerEPKsKPcKPc(PrePostFixer *const this, const char* prefix, const char* postfix);
+/*made of compiler:*/void _ZNC12PrePostFixerEPKsKPK12PrePostFixer(PrePostFixer *const this, const PrePostFixer *const other);
+/*virtual*/void _ZND12PrePostFixerEPKv(void *const this);
+/*virtual*/void _ZN12PrePostFixer5printEKPKvKPc(const void *const this, const char* text);
+/*virtual*/void _ZN12PrePostFixer5printEKPKvlc(const void *const this, long num, char symbol);/*default symbol is: '\0'*/
+/*virtual*/char _ZN12PrePostFixer16getDefaultSymbolEKPKv(const void *const this);
 
 
-/*PrePostDollarFixer*/
-typedef struct PrePostDollarFixer{
-    PrePostFixer prePostFixer;
+/* 4---PrePostDollarFixer--- */
+typedef struct _PrePostDollarFixer{
+    PrePostFixer m_PrePostFixerBase;
 }PrePostDollarFixer;
 
+extern const char _ZN18PrePostDollarFixer14DEFAULT_SYMBOLE;
 
-void _ZN18PrePostDollarFixerCERKS_(PrePostDollarFixer* this, const char* prefix, const char* postfix);
-void _ZN18PrePostDollarFixerDEv(void* this);
-void _ZN18PrePostDollarFixerCEPKcS(PrePostDollarFixer* this, const PrePostDollarFixer*const other);
-void _ZN18PrePostDollarFixer5printElc(const void *const this,long num, char symbol);
-void _ZN18PrePostDollarFixer5printEic(const PrePostDollarFixer*const this,int num, char symbol);
-void _ZN18PrePostDollarFixer5printEdc(const PrePostDollarFixer*const this, double num, char symbol);
-char _ZN18PrePostDollarFixer16getDefaultSymbol(const void*const this);
+void _ZNC18PrePostDollarFixerEPKsKPcKPc(PrePostDollarFixer *const this, const char* prefix, const char* postfix);
+void _ZNC18PrePostDollarFixerEPKsKPK18PrePostDollarFixer(PrePostDollarFixer *const this, const PrePostDollarFixer *const other);
+/*virtual*/void _ZND18PrePostDollarFixerEPKv(void *const this);
+
+/*default symbol is PrePostDollarFixer_DEFAULT_SYMBOL*/
+void _ZNK18PrePostDollarFixer5printEKPKsic(const PrePostDollarFixer *const this, int num, char symbol);
+/*virtual*/void _ZNK18PrePostDollarFixer5printEKPKslc(const void *const this, long num, char symbol);/*vitrual*/
+void _ZNK18PrePostDollarFixer5printEKPKsdc(const PrePostDollarFixer *const this, double num, char symbol);
+/*virtual*/char _ZN18PrePostDollarFixer16getDefaultSymbolEKPKv(const void *const this);
 
 
-
-/* PrePostHashFixer*/
-typedef struct PrePostHashFixer {
-    PrePostDollarFixer prePostDollarFixer;
-    int _precision;
+/* 5 ---PrePostHashFixer--- */
+typedef struct _PrePostHashFixer{
+    PrePostDollarFixer m_PrePostDollarFixerBase;
+    int m_precision;
 }PrePostHashFixer;
 
-void _ZN18PrePostHashFixerCEcc(PrePostHashFixer* this, int prc);
-void _ZN16PrePostHashFixerDEv(void* this);
-void _ZN18PrePostHashFixerCpEpp(PrePostHashFixer* this, const PrePostHashFixer*const other);
-void _ZN16PrePostHashFixer5printEic(const PrePostHashFixer* const this,int num, char symbol);
-void _ZN16PrePostHashFixer5printElc(const void* const this,long num, char symbol);
+extern const char _ZN16PrePostHashFixer14DEFAULT_SYMBOLE;
+
+void _ZNC16PrePostHashFixerEPKsi(PrePostHashFixer *const this, int prc);/*default prc: 4*/
+/*virtual*/void _ZND16PrePostHashFixerEPKv(void *const this);
+
+/*default symbol is PrePostHashFixer_DEFAULT_SYMBOL*/
+void _ZNK16PrePostHashFixer5printEKPKsic(const PrePostHashFixer *const this, int num, char symbol);
+/*virtual*/void _ZNK16PrePostHashFixer5printEKPKslc(const void *const this, long num, char symbol);/*virtual*/
+/*virtual*/char _ZN16PrePostHashFixer16getDefaultSymbolEKPKv(const void *const this);
 
 
-char _ZNK16PrePostHashFixer16getDefaultSymbolEv(const void*const this);
 
-
-/*PrePostFloatDollarFixer*/
-typedef struct PrePostFloatDollarFixer{
-    PrePostDollarFixer prePostDollarFixer;
+/*6 ---PrePostFloatDollarFixer--- */
+typedef struct _PrePostFloatDollarFixer{
+    PrePostDollarFixer m_PrePostDollarFixerBase;
 }PrePostFloatDollarFixer;
 
-void _ZN18PrePostFloatDollarFixerCEcc(PrePostFloatDollarFixer* this, const char* prefix, const char* postfix);
-void _ZN18PrePostFloatDollarFixerCpEpp(PrePostFloatDollarFixer* this, const PrePostFloatDollarFixer*const other);
-void _ZN16PrePostFloatDollarFixerDEv(void* this);
-void _ZN23PrePostFloatDollarFixer5printEf(const void* const this, float num);
-void _ZNK23PrePostFloatDollarFixer5printEfc(const void* const this, float num, char symbol);
-char _ZNK23PrePostFloatDollarFixer16getDefaultSymbolEv(const void*const this);
+extern const char _ZN23PrePostFloatDollarFixer14DEFAULT_SYMBOLE;
 
-/*PrePostChecker*/
-typedef struct PrePostChecker{
-    PrePostFloatDollarFixer prePostFloatDollarFixer;
+void _ZNC23PrePostFloatDollarFixerEPKsKPcKPc(PrePostFloatDollarFixer *const this, const char* prefix, const char* postfix);
+/*virtual*/void _ZND23PrePostFloatDollarFixerEPKv(void *const this);
+void _ZNK23PrePostFloatDollarFixer5printEKPKsf(const PrePostFloatDollarFixer *const this, float num);
+void _ZNK23PrePostFloatDollarFixer5printEKPKsfc(const PrePostFloatDollarFixer *const this, float num, char symbol);
+/*virtual*/char _ZN23PrePostFloatDollarFixer16getDefaultSymbolEKPKv(const void *const this);
+
+
+/*7 ---PrePostChecker--- */
+typedef struct _PrePostChecker{
+    PrePostFloatDollarFixer m_PrePostFloatDollarFixerBase;
 }PrePostChecker;
 
-void _ZN14PrePostCheckerCEv(void* this);
-void _ZN14PrePostCheckerDEv(void* this);
-void _ZNK14PrePostChecker24printThisSymbolUsingFuncEv(const void*const this);
-void _ZNK14PrePostChecker23printThisSymbolDirectlyEv(const void*const this);
-void _ZN14PrePostChecker24printDollarSymbolByCastUsingFuncEv(const void*const this);
-void _ZN14PrePostChecker24printDollarSymbolByScopeUsingFuncEv(const void*const this);
-void _ZNK14PrePostChecker31printDollarSymbolByCastDirectlyEv(const void*const this);
-void _ZN14PrePostChecker24printDollarSymbolByScopeDirectlyEv(const void*const this);
+
+void _ZNC14PrePostCheckerEPKs(PrePostChecker *const this);
+/*virtual*/void _ZND14PrePostCheckerEPKv(void *const this);
+
+void _ZNK14PrePostChecker24printThisSymbolUsingFuncEKPKs(const PrePostChecker *const this);
+void _ZNK14PrePostChecker23printThisSymbolDirectlyEKPKs(const PrePostChecker *const this);
+void _ZNK14PrePostChecker32printDollarSymbolByCastUsingFuncEKPKs(const PrePostChecker *const this);
+void _ZNK14PrePostChecker33printDollarSymbolByScopeUsingFuncEKPKs(const PrePostChecker *const this);
+void _ZNK14PrePostChecker31printDollarSymbolByCastDirectlyEKPKs(const PrePostChecker *const this);
+void _ZNK14PrePostChecker32printDollarSymbolByScopeDirectlyEKPKs(const PrePostChecker *const this);
 
 
-/* Multiplier*/
 
-typedef struct Multiplier{
-    DefaultTextFormatter defaultTextFormatter;
-    int _times;
+/*8 ---Multiplier--- */
+typedef struct _Multiplier{
+    DefaultTextFormatter m_DefaultTextFormatterBase;
+    int m_times;
 }Multiplier;
 
-void _ZN10MultiplierD0Ev(void* this);
-void _ZN10MultiplierC1ERKS_(Multiplier* this, const Multiplier*const other);
-void _ZNK10Multiplier5printEPKc(const void*const this, const char*);
+
+/*virtual*/void _ZND10MultiplierEPKv(void *const this);
+/*made of compiler*/void _ZNC10Multiplier_dtorEPKsKPK10Multiplier(Multiplier *const this, const Multiplier *const other);
+/*virtual*/void _ZNK10Multiplier5printEKPKvKPc(const void *const this, const char* text);
+
+
+/*--------inlines---------*/
+/* global inline
+inline void printFunc(const char* fname)
+{
+    printf("%-60s | ", fname);
+}*/
+
+
+/* PrePostFixer inlines:
+inline const char* PrePostFixer::getPrefix() const
+{
+return pre;
+}
+inline const char* PrePostFixer::getPostfix() const
+{
+return post;
+}
+inline void PrePostFixer::print_num(long num) const
+{
+printFunc("[PrePostFixer::print_num(long)]");
+printf("%s%ld%s\n", pre, num, post);
+}
+inline void PrePostFixer::print_num(long num, char symbol) const
+{
+printFunc("[PrePostFixer::print_num(long, char)]");
+printf("%s%c%ld%s\n", pre, symbol, num, post);
+}
+*/
+
+
+/* PrePostHashFixer inlines:
+inline void PrePostHashFixer::print(double num, char symbol) const
+{
+printFunc("[PrePostHashFixer::print(double, char)]");
+printf("%s[%c%.*f]%s\n", getPrefix(), symbol, precision, num, getPostfix());
+}
+*/
+
+/* Multiplier inlines:
+void Multiplier_ctor(Multiplier *const this, int t) /---default t: 2---/
+{
+    DefaultTextFormatter_ctor(this->m_DefaultTextFormatterBase);
+    ((TextFormatter*)this)->m_vptr = MultiplierVTable;
+    this->m_times = t;
+    printf("--- Multiplier CTOR: times = %d\n", this->m_times);
+}
+inline int Multiplier::getTimes() const
+{
+return m_times;
+}
+inline void Multiplier::setTimes(int t)
+{
+    m_times = t;
+}
+*/
 
 #endif /*/UNDERTHEHOOD_POLYMORPISM_H*/
